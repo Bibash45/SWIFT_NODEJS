@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+// enum
+enum Role {
+  user
+  admin
+}
+
+
+model users {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role Role @default(user)
+  orders    orders[]  // One-to-many relation
+  createdAt DateTime @default(now())
+}
+
+model orders {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       users     @relation(fields: [userId], references: [id])
+  totalPrice Float
+  createdAt  DateTime @default(now())
+  orderItems orderItems[]
+}
+
+model products {
+  id          Int         @id @default(autoincrement())
+  name        String
+  price       Float
+  orderItems  orderItems[]
+}
+
+model orderItems {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  order     orders   @relation(fields: [orderId], references: [id])
+  product   products @relation(fields: [productId], references: [id])
+}
+
