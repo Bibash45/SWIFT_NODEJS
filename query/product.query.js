@@ -46,9 +46,32 @@ export const deleteProductByField = async (field, value) => {
 };
 
 // Get all products
-export const getAllProducts = async () => {
-  const [rows] = await db.query("SELECT * FROM products");
-  return rows;
+export const getAllProducts = async (page = 1, limit = 10) => {
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const offset = (page - 1) * limit;
+
+  // Fetch paginated products
+  const [products] = await db.query("SELECT * FROM products LIMIT ? OFFSET ?", [
+    limit,
+    offset,
+  ]);
+
+  // Get total count of products
+  const [countResult] = await db.query(
+    "SELECT COUNT(*) AS total FROM products"
+  );
+  const total = countResult[0].total;
+
+  return {
+    products,
+    meta: {
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 // Get product by dynamic field

@@ -2,3 +2,34 @@
 
 npm install prisma --save-dev
 npx prisma init
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A few suggestions for even better quality:
+
+    Error handling:
+    You log errors, which is great. Consider sending error events back to the client optionally, so the UI can respond to failures gracefully.
+
+    Use constants for statuses:
+    Instead of hardcoding 'DELIVERED' and 'READ' strings, you can define constants or enums to avoid typos.
+
+    Edge case: message-read when sender is offline
+    Currently, you notify sender sockets only if they're online. You might want to also update some notification queue in DB or other mechanism for when the sender comes back online.
+
+    Rate limiting or throttling (optional):
+    To prevent abuse (e.g., flooding send-message or message-read), consider adding some limits.
+
+    Security:
+    Make sure only authorized users can send messages or mark messages as read/delivered for conversations they belong to (e.g., verify userId matches socket authenticated user).

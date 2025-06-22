@@ -6,45 +6,112 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
-// enum
+
 enum Role {
   user
   admin
 }
 
+enum MessageStatusEnum {
+  SENT
+  DELIVERED
+  READ
+}
 
 model users {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role Role @default(user)
-  orders    orders[]  // One-to-many relation
-  createdAt DateTime @default(now())
+  id                 Int                       @id @default(autoincrement())
+  name               String
+  email              String                    @unique
+  password           String
+  role               Role                      @default(user)
+  orders             orders[]
+
+  // Chat relations
+  conversationParticipants conversationParticipants[]
+  sentMessages             messages[]
+
+  messageStatuses         messageStatuses[]
+
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @default(now()) @updatedAt
+}
+
+model conversations {
+  id                  Int                       @id @default(autoincrement())
+  title               String?
+  isGroup             Boolean                   @default(false)
+  participants        conversationParticipants[]
+  messages            messages[]
+
+  createdAt           DateTime                  @default(now())
+  updatedAt          DateTime                  @default(now()) @updatedAt
+  deletedAt           DateTime?
+}
+
+model conversationParticipants {
+  id                  Int                       @id @default(autoincrement())
+  conversationId      Int
+  userId              Int
+  joinedAt            DateTime                  @default(now())
+  isAdmin             Boolean                   @default(false)
+
+  conversation        conversations             @relation(fields: [conversationId], references: [id])
+  user                users                     @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])
+}
+
+model messages {
+  id                  Int                       @id @default(autoincrement())
+  conversationId      Int
+  senderId            Int
+  content             String
+  sentAt              DateTime                  @default(now())
+  editedAt            DateTime?
+  deletedAt           DateTime?
+
+  conversation        conversations             @relation(fields: [conversationId], references: [id])
+  sender              users                     @relation(fields: [senderId], references: [id])
+  statuses            messageStatuses[]
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model messageStatuses {
+  id                  Int                       @id @default(autoincrement())
+  messageId           Int
+  userId              Int
+  status              MessageStatusEnum         @default(DELIVERED)
+  updatedAt           DateTime                  @default(now()) @updatedAt
+
+  message             messages                  @relation(fields: [messageId], references: [id])
+  user                users                     @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId])
 }
 
 model orders {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  user       users     @relation(fields: [userId], references: [id])
-  totalPrice Float
-  createdAt  DateTime @default(now())
-  orderItems orderItems[]
+  id                  Int                       @id @default(autoincrement())
+  userId              Int
+  user                users                     @relation(fields: [userId], references: [id])
+  totalPrice          Float
+  createdAt           DateTime                  @default(now())
+  orderItems          orderItems[]
 }
 
 model products {
-  id          Int         @id @default(autoincrement())
-  name        String
-  price       Float
-  orderItems  orderItems[]
+  id                  Int                       @id @default(autoincrement())
+  name                String
+  price               Float
+  orderItems          orderItems[]
 }
 
 model orderItems {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  productId Int
-  quantity  Int
-  order     orders   @relation(fields: [orderId], references: [id])
-  product   products @relation(fields: [productId], references: [id])
+  id                  Int                       @id @default(autoincrement())
+  orderId             Int
+  productId           Int
+  quantity            Int
+  order               orders                    @relation(fields: [orderId], references: [id])
+  product             products                  @relation(fields: [productId], references: [id])
 }
-

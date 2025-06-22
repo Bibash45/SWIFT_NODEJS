@@ -25,9 +25,23 @@ export const createUser = async (data) => {
 };
 
 // READ all users
-export const getAllUsers = async () => {
-  const [rows] = await db.query("SELECT * FROM users");
-  return rows;
+export const getAllUsers = async (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
+
+  const [data] = await db.query("SELECT * FROM users LIMIT ? OFFSET ?", [
+    limit,
+    offset,
+  ]);
+  const [countResult] = await db.query("SELECT COUNT(*) as total FROM users");
+
+  return {
+    users: data,
+    meta: {
+      total: countResult[0].total,
+      currentPage: page,
+      totalPages: Math.ceil(countResult[0].total / limit),
+    },
+  };
 };
 
 // GET user by any field (e.g., email, id, etc.)

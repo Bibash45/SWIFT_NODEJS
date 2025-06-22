@@ -22,15 +22,36 @@ export const createOrders = async (data) => {
 };
 
 // 🔹 Get all orders
-export const getAllOrders = async () => {
-  const [rows] = await db.query("SELECT * FROM orders");
-  return rows;
+export const getAllOrders = async (page = 1, limit = 10) => {
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  const offset = (page - 1) * limit;
+
+  // Fetch orders with pagination
+  const [orders] = await db.query("SELECT * FROM orders LIMIT ? OFFSET ?", [
+    limit,
+    offset,
+  ]);
+
+  // Get total number of orders
+  const [countResult] = await db.query("SELECT COUNT(*) AS total FROM orders");
+  const total = countResult[0].total;
+
+  return {
+    orders,
+    meta: {
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 // 🔹 Get order by any field
 export const getOrderByField = async (field, value) => {
-    console.log(field,value);
-    
+  console.log(field, value);
+
   const query = `SELECT * FROM orders WHERE ${field} = ?`;
   const [rows] = await db.query(query, [value]);
   return rows.length ? rows[0] : null;
@@ -61,7 +82,10 @@ export const updateOrders = async (orderId, data) => {
 
     if (fields.length > 0) {
       values.push(orderId);
-      await db.query(`UPDATE orders SET ${fields.join(", ")} WHERE id = ?`, values);
+      await db.query(
+        `UPDATE orders SET ${fields.join(", ")} WHERE id = ?`,
+        values
+      );
     }
 
     if (orderItems && orderItems.length > 0) {
@@ -85,7 +109,10 @@ export const updateOrders = async (orderId, data) => {
 
         if (itemFields.length > 0) {
           itemValues.push(itemId);
-          await db.query(`UPDATE orderItems SET ${itemFields.join(", ")} WHERE id = ?`, itemValues);
+          await db.query(
+            `UPDATE orderItems SET ${itemFields.join(", ")} WHERE id = ?`,
+            itemValues
+          );
         }
       }
     }
@@ -109,7 +136,9 @@ export const deleteOrders = async (field, value) => {
     const orderId = existingOrder.id;
 
     await db.query("DELETE FROM orderItems WHERE orderId = ?", [orderId]);
-    const [result] = await db.query("DELETE FROM orders WHERE id = ?", [orderId]);
+    const [result] = await db.query("DELETE FROM orders WHERE id = ?", [
+      orderId,
+    ]);
 
     return { success: true, result };
   } catch (error) {

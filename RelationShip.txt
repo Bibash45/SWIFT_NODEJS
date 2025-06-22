@@ -1,0 +1,50 @@
+users
+  ├─< orders (one-to-many)
+  ├─< conversationParticipants (one-to-many)
+  ├─< messages (sentMessages) (one-to-many)
+  ├─< messageStatuses (one-to-many)
+  
+conversations
+  ├─< conversationParticipants (one-to-many)
+  ├─< messages (one-to-many)
+
+conversationParticipants (join table)
+  ├─> users (many-to-one)
+  ├─> conversations (many-to-one)
+
+messages
+  ├─> conversations (many-to-one)
+  ├─> users (sender) (many-to-one)
+  ├─< messageStatuses (one-to-many)
+
+messageStatuses
+  ├─> messages (many-to-one)
+  ├─> users (many-to-one)
+
+orders
+  ├─> users (many-to-one)
+  ├─< orderItems (one-to-many)
+
+products
+  ├─< orderItems (one-to-many)
+
+orderItems (join table)
+  ├─> orders (many-to-one)
+  ├─> products (many-to-one)
+
+
+
+
+
+
+
+[users] 1----* [orders]
+
+[users] 1----* [conversationParticipants] *----1 [conversations]
+                   |                              |
+                   |                              |
+                   |                              *----* [messages] *----1 [users] (sender)
+                   |                                      |
+                   |                                      *----* [messageStatuses] *----1 [users]
+
+[orders] 1----* [orderItems] *----1 [products]
